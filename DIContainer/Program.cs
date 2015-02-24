@@ -1,6 +1,10 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using DIContainer.Commands;
+using Ninject;
+using Ninject.Parameters;
 
 namespace DIContainer
 {
@@ -13,16 +17,16 @@ namespace DIContainer
         {
             this.arguments = arguments;
             this.commands = commands;
-        
         }
 
         static void Main(string[] args)
         {
-            var arguments = new CommandLineArgs(args);
-            var printTime = new PrintTimeCommand();
-            var timer = new TimerCommand(arguments);
-            var commands = new ICommand[] { printTime, timer };
-            new Program(arguments, commands).Run();
+	        var kernel = new StandardKernel();
+	        kernel.Bind<ICommand>().To<PrintTimeCommand>();
+	        kernel.Bind<ICommand>().To<TimerCommand>();
+			kernel.Bind<ICommand>().To<HelpCommand>();
+	        kernel.Bind<CommandLineArgs>().To<CommandLineArgs>().WithConstructorArgument(args);
+            kernel.Get<Program>().Run();
         }
 
         public void Run()
