@@ -4,7 +4,7 @@ using NUnit.Framework;
 
 namespace battleships
 {
-	public class MapGenerator
+	public class MapGenerator : IMapGenerator
 	{
 		private readonly Settings settings;
 		private readonly Random random;
