@@ -6,26 +6,29 @@ namespace battleships
 {
 	public class MapGenerator
 	{
-		private readonly Settings settings;
 		private readonly Random random;
+		private readonly int width, height;
+		private readonly int[] ships;
 
-		public MapGenerator(Settings settings, Random random)
+		public MapGenerator(Random random, int width, int height, int[] ships)
 		{
-			this.settings = settings;
 			this.random = random;
+			this.width = width;
+			this.height = height;
+			this.ships = ships;
 		}
 
 		public Map GenerateMap()
 		{
-			var map = new Map(settings.Width, settings.Height);
-			foreach (var size in settings.Ships.OrderByDescending(s => s))
+			var map = new Map(width, height);
+			foreach (var size in ships.OrderByDescending(s => s))
 				PlaceShip(map, size);
 			return map;
 		}
 
 		private void PlaceShip(Map map, int size)
 		{
-			var cells = Vector.Rect(0, 0, settings.Width, settings.Height).OrderBy(v => random.Next());
+			var cells = Vector.Rect(0, 0, width, height).OrderBy(v => random.Next());
 			foreach (var loc in cells)
 			{
 				var horizontal = random.Next(2) == 0;
@@ -42,7 +45,7 @@ namespace battleships
 		public void always_succeed_on_standard_map()
 		{
 			var settings = new Settings { Width = 10, Height = 10, Ships = new[] { 1, 1, 1, 1, 2, 2, 2, 3, 3, 4 } };
-			var gen = new MapGenerator(settings, new Random());
+			var gen = new MapGenerator(new Random(), settings.Width, settings.Height, settings.Ships);
 			for (var i = 0; i < 10000; i++)
 				gen.GenerateMap();
 		}

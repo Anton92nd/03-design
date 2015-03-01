@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using NLog;
 
 namespace battleships
@@ -8,11 +9,9 @@ namespace battleships
 	public class AiTester
 	{
 		private static readonly Logger resultsLog = LogManager.GetLogger("results");
-		private readonly Settings settings;
 
-		public AiTester(Settings settings)
+		public AiTester()
 		{
-			this.settings = settings;
 		}
 
 		private void RestartAi(string exe, out Ai ai, ProcessMonitor monitor)
@@ -22,33 +21,31 @@ namespace battleships
 		}
 
 
-		public void TestSingleFile(string exe)
+		public GameResults TestSingleFile(string exe, MapGenerator gen, ProcessMonitor monitor, GameVisualizer vis,
+			int height, int width, int gamesCount, int crashLimit, bool verbose, bool interactive)
 		{
-			var gen = new MapGenerator(settings, new Random(settings.RandomSeed));
-			var vis = new GameVisualizer();
-			var monitor = new ProcessMonitor(TimeSpan.FromSeconds(settings.TimeLimitSeconds * settings.GamesCount), settings.MemoryLimit);
 			var badShots = 0;
 			var crashes = 0;
 			var gamesPlayed = 0;
 			var shots = new List<int>();
 			Ai ai;
 			RestartAi(exe, out ai, monitor);
-			for (var gameIndex = 0; gameIndex < settings.GamesCount; gameIndex++)
+			for (var gameIndex = 0; gameIndex < gamesCount; gameIndex++)
 			{
 				var map = gen.GenerateMap();
 				var game = new Game(map, ai);
-				RunGameToEnd(game, vis);
+				RunGameToEnd(game, vis, interactive);
 				gamesPlayed++;
 				badShots += game.BadShots;
 				if (game.AiCrashed)
 				{
 					crashes++;
-					if (crashes > settings.CrashLimit) break;
+					if (crashes > crashLimit) break;
 					RestartAi(exe, out ai, monitor);
 				}
 				else
 					shots.Add(game.TurnsCount);
-				if (settings.Verbose)
+				if (verbose)
 				{
 					Console.WriteLine(
 						"Game #{3,4}: Turns {0,4}, BadShots {1}{2}",
@@ -56,15 +53,15 @@ namespace battleships
 				}
 			}
 			ai.Dispose();
-			WriteTotal(ai, shots, crashes, badShots, gamesPlayed);
+			return new GameResults(ai.Name, shots, crashes, badShots, gamesPlayed, crashLimit, width, height);
 		}
 
-		private void RunGameToEnd(Game game, GameVisualizer vis)
+		private void RunGameToEnd(Game game, GameVisualizer vis, bool interactive)
 		{
 			while (!game.IsOver())
 			{
 				game.MakeStep();
-				if (settings.Interactive)
+				if (interactive)
 				{
 					vis.Visualize(game);
 					if (game.AiCrashed)
@@ -72,38 +69,6 @@ namespace battleships
 					Console.ReadKey();
 				}
 			}
-		}
-
-		private void WriteTotal(Ai ai, List<int> shots, int crashes, int badShots, int gamesPlayed)
-		{
-			if (shots.Count == 0) shots.Add(1000 * 1000);
-			shots.Sort();
-			var median = shots.Count % 2 == 1 ? shots[shots.Count / 2] : (shots[shots.Count / 2] + shots[(shots.Count + 1) / 2]) / 2;
-			var mean = shots.Average();
-			var sigma = Math.Sqrt(shots.Average(s => (s - mean) * (s - mean)));
-			var badFraction = (100.0 * badShots) / shots.Sum();
-			var crashPenalty = 100.0 * crashes / settings.CrashLimit;
-			var efficiencyScore = 100.0 * (settings.Width * settings.Height - mean) / (settings.Width * settings.Height);
-			var score = efficiencyScore - crashPenalty - badFraction;
-			var headers = FormatTableRow(new object[] { "AiName", "Mean", "Sigma", "Median", "Crashes", "Bad%", "Games", "Score" });
-			var message = FormatTableRow(new object[] { ai.Name, mean, sigma, median, crashes, badFraction, gamesPlayed, score });
-			resultsLog.Info(message);
-			Console.WriteLine();
-			Console.WriteLine("Score statistics");
-			Console.WriteLine("================");
-			Console.WriteLine(headers);
-			Console.WriteLine(message);
-		}
-
-		private string FormatTableRow(object[] values)
-		{
-			return FormatValue(values[0], 15) 
-				+ string.Join(" ", values.Skip(1).Select(v => FormatValue(v, 7)));
-		}
-
-		private static string FormatValue(object v, int width)
-		{
-			return v.ToString().Replace("\t", " ").PadRight(width).Substring(0, width);
 		}
 	}
 }
