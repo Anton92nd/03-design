@@ -33,7 +33,8 @@ namespace battleships
 			kernel.Bind<IGameVisualizer>().To<GameVisualizer>();
 			if (File.Exists(aiPath))
 			{
-				kernel.Get<AiTester>().TestSingleFile(aiPath);
+				kernel.Get<AiTester>().TestSingleFile(aiPath, settings.GamesCount, settings.CrashLimit,
+					settings.Verbose, settings.Interactive, settings.Width * settings.Height);
 				//tester.TestSingleFile(aiPath, new GameVisualizer());
 			}
 			else
