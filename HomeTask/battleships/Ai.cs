@@ -76,8 +76,8 @@ namespace battleships
 				WindowStyle = ProcessWindowStyle.Hidden
 			};
 			var aiProcess = Process.Start(startInfo);
-			processStarted(aiProcess);
-			//monitor.Register(aiProcess);
+			if (processStarted != null)
+				processStarted(aiProcess);
 			return aiProcess;
 		}
 

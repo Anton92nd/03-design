@@ -15,6 +15,13 @@ namespace battleships
 			this.settings = settings;
 		}
 
+		private void RestartAi(string exe, out Ai ai, ProcessMonitor monitor)
+		{
+			ai = new Ai(exe);
+			ai.processStarted += monitor.Register;
+		}
+
+
 		public void TestSingleFile(string exe)
 		{
 			var gen = new MapGenerator(settings, new Random(settings.RandomSeed));
@@ -24,8 +31,8 @@ namespace battleships
 			var crashes = 0;
 			var gamesPlayed = 0;
 			var shots = new List<int>();
-			var ai = new Ai(exe);
-			ai.processStarted += monitor.Register;
+			Ai ai;
+			RestartAi(exe, out ai, monitor);
 			for (var gameIndex = 0; gameIndex < settings.GamesCount; gameIndex++)
 			{
 				var map = gen.GenerateMap();
@@ -37,8 +44,7 @@ namespace battleships
 				{
 					crashes++;
 					if (crashes > settings.CrashLimit) break;
-					ai = new Ai(exe);
-					ai.processStarted += monitor.Register;
+					RestartAi(exe, out ai, monitor);
 				}
 				else
 					shots.Add(game.TurnsCount);
