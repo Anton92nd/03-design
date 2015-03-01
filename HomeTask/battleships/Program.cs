@@ -21,15 +21,14 @@ namespace battleships
 			var kernel = new StandardKernel();
 			var settings = new Settings("settings.txt");
 			kernel.Bind<IMapGenerator>().To<MapGenerator>()
-				.WithConstructorArgument(settings)
-				.WithConstructorArgument(new Random(settings.RandomSeed));
-			//var gen = new MapGenerator(settings, new Random(settings.RandomSeed));
+				.WithConstructorArgument("random", new Random(settings.RandomSeed))
+				.WithConstructorArgument("width", settings.Width)
+				.WithConstructorArgument("height", settings.Height)
+				.WithConstructorArgument("ships", settings.Ships);
 			kernel.Bind<IProcessMonitor>().To<ProcessMonitor>()
 				.WithConstructorArgument(TimeSpan.FromSeconds(settings.TimeLimitSeconds*settings.GamesCount))
 				.WithConstructorArgument((long)settings.MemoryLimit);
 			//var monitor = new ProcessMonitor(TimeSpan.FromSeconds(settings.TimeLimitSeconds * settings.GamesCount), settings.MemoryLimit);
-			kernel.Bind<AiTester>().To<AiTester>().WithConstructorArgument(settings);
-			//var tester = new AiTester(settings, gen, monitor);
 			kernel.Bind<IGameVisualizer>().To<GameVisualizer>();
 			if (File.Exists(aiPath))
 			{
