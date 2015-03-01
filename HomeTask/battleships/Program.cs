@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Threading;
+using Ninject;
 
 namespace battleships
 {
@@ -17,12 +18,24 @@ namespace battleships
 				return;
 			}
 			var aiPath = args[0];
+			var kernel = new StandardKernel();
 			var settings = new Settings("settings.txt");
-			var gen = new MapGenerator(settings, new Random(settings.RandomSeed));
-			var monitor = new ProcessMonitor(TimeSpan.FromSeconds(settings.TimeLimitSeconds * settings.GamesCount), settings.MemoryLimit);
-			var tester = new AiTester(settings, gen, monitor);
+			kernel.Bind<IMapGenerator>().To<MapGenerator>()
+				.WithConstructorArgument(settings)
+				.WithConstructorArgument(new Random(settings.RandomSeed));
+			//var gen = new MapGenerator(settings, new Random(settings.RandomSeed));
+			kernel.Bind<IProcessMonitor>().To<ProcessMonitor>()
+				.WithConstructorArgument(TimeSpan.FromSeconds(settings.TimeLimitSeconds*settings.GamesCount))
+				.WithConstructorArgument((long)settings.MemoryLimit);
+			//var monitor = new ProcessMonitor(TimeSpan.FromSeconds(settings.TimeLimitSeconds * settings.GamesCount), settings.MemoryLimit);
+			kernel.Bind<AiTester>().To<AiTester>().WithConstructorArgument(settings);
+			//var tester = new AiTester(settings, gen, monitor);
+			kernel.Bind<IGameVisualizer>().To<GameVisualizer>();
 			if (File.Exists(aiPath))
-				tester.TestSingleFile(aiPath, new GameVisualizer());
+			{
+				kernel.Get<AiTester>().TestSingleFile(aiPath);
+				//tester.TestSingleFile(aiPath, new GameVisualizer());
+			}
 			else
 				Console.WriteLine("No AI exe-file " + aiPath);
 		}

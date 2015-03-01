@@ -11,15 +11,17 @@ namespace battleships
 		private readonly Settings settings;
 		private readonly IMapGenerator gen;
 		private readonly IProcessMonitor monitor;
+		private readonly IGameVisualizer vis;
 
-		public AiTester(Settings settings, IMapGenerator gen, IProcessMonitor monitor)
+		public AiTester(Settings settings, IMapGenerator gen, IProcessMonitor monitor, IGameVisualizer vis)
 		{
 			this.settings = settings;
 			this.gen = gen;
 			this.monitor = monitor;
+			this.vis = vis;
 		}
 
-		public void TestSingleFile(string exe, IGameVisualizer visualizer)
+		public void TestSingleFile(string exe)
 		{
 			var badShots = 0;
 			var crashes = 0;
@@ -30,7 +32,7 @@ namespace battleships
 			{
 				var map = gen.GenerateMap();
 				var game = new Game(map, ai);
-				RunGameToEnd(game, visualizer);
+				RunGameToEnd(game, vis);
 				gamesPlayed++;
 				badShots += game.BadShots;
 				if (game.AiCrashed)
