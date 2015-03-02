@@ -8,8 +8,6 @@ namespace battleships
 {
 	public class AiTester
 	{
-		private static readonly Logger resultsLog = LogManager.GetLogger("results");
-
 		public AiTester()
 		{
 		}
@@ -24,10 +22,8 @@ namespace battleships
 		public GameResults TestSingleFile(string exe, MapGenerator gen, ProcessMonitor monitor, GameVisualizer vis,
 			int height, int width, int gamesCount, int crashLimit, bool verbose, bool interactive)
 		{
-			var badShots = 0;
 			var crashes = 0;
-			var gamesPlayed = 0;
-			var shots = new List<int>();
+			var games = new List<Game>();
 			Ai ai;
 			RestartAi(exe, out ai, monitor);
 			for (var gameIndex = 0; gameIndex < gamesCount; gameIndex++)
@@ -35,16 +31,13 @@ namespace battleships
 				var map = gen.GenerateMap();
 				var game = new Game(map, ai);
 				RunGameToEnd(game, vis, interactive);
-				gamesPlayed++;
-				badShots += game.BadShots;
 				if (game.AiCrashed)
 				{
 					crashes++;
 					if (crashes > crashLimit) break;
 					RestartAi(exe, out ai, monitor);
 				}
-				else
-					shots.Add(game.TurnsCount);
+				games.Add(game);
 				if (verbose)
 				{
 					Console.WriteLine(
@@ -53,7 +46,7 @@ namespace battleships
 				}
 			}
 			ai.Dispose();
-			return new GameResults(ai.Name, shots, crashes, badShots, gamesPlayed, crashLimit, width, height);
+			return new GameResults(ai.Name, games, crashLimit, width, height);
 		}
 
 		private void RunGameToEnd(Game game, GameVisualizer vis, bool interactive)

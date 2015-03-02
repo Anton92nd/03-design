@@ -4,11 +4,14 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using NLog;
 
 namespace battleships
 {
 	public class Program
 	{
+		private static readonly Logger resultsLog = LogManager.GetLogger("results");
+
 		private static void Main(string[] args)
 		{
 			Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
@@ -37,7 +40,7 @@ namespace battleships
 		{
 			var headers = FormatTableRow(stats.Headers);
 			var message = FormatTableRow(stats.Values);
-			//resultsLog.Info(message);
+			resultsLog.Info(message);
 			Console.WriteLine();
 			Console.WriteLine("Score statistics");
 			Console.WriteLine("================");

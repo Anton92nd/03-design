@@ -11,8 +11,12 @@ namespace battleships
 		public object[] Headers { get; private set; }
 		public object[] Values { get; private set; }
 
-		public GameResults(string aiName, List<int> shots, int crashes, int badShots, int gamesPlayed, int crashLimit, int width, int height)
+		public GameResults(string aiName, List<Game> games, int crashLimit, int width, int height)
 		{
+			var shots = games.Where(g => !g.AiCrashed).Select(g => g.TurnsCount).ToList();
+			var badShots = games.Select(g => g.BadShots).Sum();
+			var crashes = games.Count(g => g.AiCrashed);
+			var gamesPlayed = games.Count;
 			Headers = new object[] { "AiName", "Mean", "Sigma", "Median", "Crashes", "Bad%", "Games", "Score" };
 			if (shots.Count == 0) shots.Add(1000 * 1000);
 			shots.Sort();
