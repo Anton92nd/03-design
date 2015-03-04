@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using NLog;
+using NUnit.Framework;
 
 namespace battleships
 {
@@ -26,26 +28,42 @@ namespace battleships
 			var monitor = new ProcessMonitor(TimeSpan.FromSeconds(settings.TimeLimitSeconds * settings.GamesCount), settings.MemoryLimit);
 			var gen = new MapGenerator(new Random(settings.RandomSeed), settings.Width, settings.Height, settings.Ships);
 			var vis = new GameVisualizer();
+			var aiProvider = new AiProvider(monitor, aiPath);
 			if (File.Exists(aiPath))
 			{
-				var results = tester.TestSingleFile(aiPath, gen, monitor, vis, settings.Height, settings.Width, 
-					settings.GamesCount, settings.CrashLimit, settings.Verbose, settings.Interactive);
-				WriteTotalStats(results);
+				var results = tester.TestSingleFile(aiProvider, gen, vis, settings.GamesCount, 
+					settings.CrashLimit, settings.Verbose, settings.Interactive);
+				WriteTotalStats(new Ai(aiPath).Name, results, settings.CrashLimit, settings.Width, settings.Height);
 			}
 			else
 				Console.WriteLine("No AI exe-file " + aiPath);
 		}
 
-		private static void WriteTotalStats(GameResults stats)
+		private static void WriteTotalStats(string aiName, List<Game> games, int crashLimit, int width, int height)
 		{
-			var headers = FormatTableRow(stats.Headers);
-			var message = FormatTableRow(stats.Values);
-			resultsLog.Info(message);
+			var shots = games.Where(g => !g.AiCrashed).Select(g => g.TurnsCount).ToList();
+			var badShots = games.Select(g => g.BadShots).Sum();
+			var crashes = games.Count(g => g.AiCrashed);
+			var gamesPlayed = games.Count;
+			if (shots.Count == 0) shots.Add(1000 * 1000);
+			shots.Sort();
+			var median = shots.Count % 2 == 1 ? shots[shots.Count / 2] : (shots[shots.Count / 2] + shots[(shots.Count + 1) / 2]) / 2;
+			var mean = shots.Average();
+			var sigma = Math.Sqrt(shots.Average(s => (s - mean) * (s - mean)));
+			var badFraction = (100.0 * badShots) / shots.Sum();
+			var crashPenalty = 100.0 * crashes / crashLimit;
+			var efficiencyScore = 100.0 * (width * height - mean) / (width * height);
+			var score = efficiencyScore - crashPenalty - badFraction;
+			var headers = new object[] { "AiName", "Mean", "Sigma", "Median", "Crashes", "Bad%", "Games", "Score" };
+			var values = new object[] { aiName, mean, sigma, median, crashes, badFraction, gamesPlayed, score };
+			var headersString = FormatTableRow(headers);
+			var messageString = FormatTableRow(values);
+			resultsLog.Info(messageString);
 			Console.WriteLine();
 			Console.WriteLine("Score statistics");
 			Console.WriteLine("================");
-			Console.WriteLine(headers);
-			Console.WriteLine(message);
+			Console.WriteLine(headersString);
+			Console.WriteLine(messageString);
 		}
 
 		private static string FormatTableRow(object[] values)

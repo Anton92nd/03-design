@@ -12,44 +12,35 @@ namespace battleships
 		{
 		}
 
-		private void RestartAi(string exe, out Ai ai, ProcessMonitor monitor)
-		{
-			ai = new Ai(exe);
-			ai.processStarted += monitor.Register;
-		}
-
-
-		public GameResults TestSingleFile(string exe, MapGenerator gen, ProcessMonitor monitor, GameVisualizer vis,
-			int height, int width, int gamesCount, int crashLimit, bool verbose, bool interactive)
+		public List<Game> TestSingleFile(AiProvider aiProvider, MapGenerator gen, GameVisualizer vis,
+			int gamesCount, int crashLimit, bool verbose, bool interactive)
 		{
 			var crashes = 0;
-			var games = new List<Game>();
-			Ai ai;
-			RestartAi(exe, out ai, monitor);
-			for (var gameIndex = 0; gameIndex < gamesCount; gameIndex++)
+			var games = Enumerable.Range(0, gamesCount)
+				.Select(i => aiProvider.TryProvideAi())
+				.Where(ai => ai != null)
+				.Select(ai => RunGameToEnd(new Game(gen.GenerateMap(), ai), vis, interactive))
+				.ToList();
+			var gameIndex = 0;
+			foreach (var game in games)
 			{
-				var map = gen.GenerateMap();
-				var game = new Game(map, ai);
-				RunGameToEnd(game, vis, interactive);
 				if (game.AiCrashed)
 				{
 					crashes++;
 					if (crashes > crashLimit) break;
-					RestartAi(exe, out ai, monitor);
 				}
-				games.Add(game);
 				if (verbose)
 				{
 					Console.WriteLine(
 						"Game #{3,4}: Turns {0,4}, BadShots {1}{2}",
 						game.TurnsCount, game.BadShots, game.AiCrashed ? ", Crashed" : "", gameIndex);
 				}
+				gameIndex++;
 			}
-			ai.Dispose();
-			return new GameResults(ai.Name, games, crashLimit, width, height);
+			return games.Take(gameIndex).ToList();
 		}
 
-		private void RunGameToEnd(Game game, GameVisualizer vis, bool interactive)
+		private Game RunGameToEnd(Game game, GameVisualizer vis, bool interactive)
 		{
 			while (!game.IsOver())
 			{
@@ -62,6 +53,7 @@ namespace battleships
 					Console.ReadKey();
 				}
 			}
+			return game;
 		}
 	}
 }

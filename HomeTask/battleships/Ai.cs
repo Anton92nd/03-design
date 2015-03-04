@@ -13,7 +13,7 @@ namespace battleships
 		private readonly string exePath;
 
 		public delegate void RegisterProcess(Process process);
-		public event RegisterProcess processStarted;
+		public event RegisterProcess ProcessStarted;
 
 		public Ai(string exePath)
 		{
@@ -76,8 +76,8 @@ namespace battleships
 				WindowStyle = ProcessWindowStyle.Hidden
 			};
 			var aiProcess = Process.Start(startInfo);
-			if (processStarted != null)
-				processStarted(aiProcess);
+			if (ProcessStarted != null)
+				ProcessStarted(aiProcess);
 			return aiProcess;
 		}
 

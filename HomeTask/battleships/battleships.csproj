@@ -49,8 +49,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Ai.cs" />
+    <Compile Include="AiProvider.cs" />
     <Compile Include="Game.cs" />
-    <Compile Include="GameResults.cs" />
     <Compile Include="GameVisualizer.cs" />
     <Compile Include="Map.cs" />
     <Compile Include="MapGenerator.cs" />
