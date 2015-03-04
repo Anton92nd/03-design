@@ -33,14 +33,16 @@ namespace battleships
 			{
 				var results = tester.TestSingleFile(aiProvider, gen, vis, settings.GamesCount, 
 					settings.CrashLimit, settings.Verbose, settings.Interactive);
-				WriteTotalStats(new Ai(aiPath).Name, results, settings.CrashLimit, settings.Width, settings.Height);
+				WriteTotalStats(new Ai(aiPath).Name, results, settings.CrashLimit);
 			}
 			else
 				Console.WriteLine("No AI exe-file " + aiPath);
 		}
 
-		private static void WriteTotalStats(string aiName, List<Game> games, int crashLimit, int width, int height)
+		private static void WriteTotalStats(string aiName, List<Game> games, int crashLimit)
 		{
+			var width = games[0].Map.Width;
+			var height = games[0].Map.Height;
 			var shots = games.Where(g => !g.AiCrashed).Select(g => g.TurnsCount).ToList();
 			var badShots = games.Select(g => g.BadShots).Sum();
 			var crashes = games.Count(g => g.AiCrashed);

@@ -44,8 +44,8 @@ namespace battleships
 		[Test]
 		public void always_succeed_on_standard_map()
 		{
-			var settings = new Settings { Width = 10, Height = 10, Ships = new[] { 1, 1, 1, 1, 2, 2, 2, 3, 3, 4 } };
-			var gen = new MapGenerator(new Random(), settings.Width, settings.Height, settings.Ships);
+			var ships = new[] { 1, 1, 1, 1, 2, 2, 2, 3, 3, 4 };
+			var gen = new MapGenerator(new Random(), 10, 10, ships);
 			for (var i = 0; i < 10000; i++)
 				gen.GenerateMap();
 		}

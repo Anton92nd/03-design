@@ -20,9 +20,16 @@ namespace battleships
 
 		public Ai TryProvideAi()
 		{
-			var result = new Ai(aiPath);
-			result.ProcessStarted += monitor.Register;
-			return result;
+			try
+			{
+				var result = new Ai(aiPath);
+				result.ProcessStarted += monitor.Register;
+				return result;
+			}
+			catch
+			{
+				return null;
+			}
 		}
 	}
 }
